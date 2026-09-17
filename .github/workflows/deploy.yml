@@ -1,0 +1,40 @@
+name: Deploy to local production
+
+on:
+  push:
+    branches:
+      - main
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: local-production
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on:
+      - self-hosted
+      - macOS
+
+    steps:
+      - name: Update production directory
+        shell: bash
+        env:
+          PROD_DIR: /Users/xkyota/Development/demo/prod/demo-pipeline
+        run: |
+          set -euo pipefail
+
+          if [ ! -d "$PROD_DIR/.git" ]; then
+            echo "Production repository not found: $PROD_DIR"
+            exit 1
+          fi
+
+          git -C "$PROD_DIR" fetch origin main
+          git -C "$PROD_DIR" reset --hard origin/main
+
+          echo "Deployed commit:"
+          git -C "$PROD_DIR" log -1 --oneline
